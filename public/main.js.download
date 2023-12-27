@@ -1,0 +1,89 @@
+(function ($) {
+  "use strict"
+
+  /* 1. Proloder */
+  $(window).on('load', function () {
+    $('#preloader-active').delay(450).fadeOut('slow');
+    $('body').delay(450).css({
+      'overflow': 'visible'
+    });
+  });
+
+  /* 2. slick Nav */
+  // mobile_menu
+  // var menu = $('ul#navigation');
+  // if (menu.length) {
+  //   menu.slicknav({
+  //     prependTo: ".mobile_menu",
+  //     closedSymbol: '+',
+  //     openedSymbol: '-'
+  //   });
+  // }
+
+  $('#slide-banner').slick({
+    slidesToShow: 1,
+    dots: false,
+    arrows: false,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    customPaging: function (slider, i) {
+      // this example would render "tabs" with titles
+      return '<div class="dot"></div>';
+    },
+  });
+
+  $('.slide-feature').slick({
+    slidesToShow: 3,
+    dots: false,
+    arrows: true,
+    infinite: false,
+    customPaging: function (slider, i) {
+      // this example would render "tabs" with titles
+      return '<div class="dot"></div>';
+    },
+    prevArrow: $('.btn-feature-pre'),
+    nextArrow: $('.btn-feature-next'),
+    responsive: [
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1
+        }
+      }
+      // You can unslick at a given breakpoint now by adding:
+      // settings: "unslick"
+      // instead of a settings object
+    ]
+  });
+  $('.slide-giaithuong').slick({
+    slidesToShow: 1,
+    dots: true,
+    arrows: false,
+    autoplay: true,
+    autoplaySpeed: 2000,
+    customPaging: function (slider, i) {
+      // this example would render "tabs" with titles
+      return '<div class="dot"></div>';
+    },
+  });
+
+  setActiveItemOneSecond();
+  function setActiveItemOneSecond() {
+    const items = $('.taisaochonchungtoi').find('.item');
+    const imgs = $('.taisaochonchungtoi').find('img');
+    let i = 0;
+    setInterval(() => {
+      items.each((index, item) => {
+        $(item).removeClass('active');
+      });
+      imgs.each((index, item) => {
+        $(item).attr('src', dot);
+      });
+      $(items[i]).addClass('active');
+      $(imgs[i]).attr('src', dotActive);
+      i++;
+      if (i > 3) i = 0;
+    }, 2000);
+  }
+})(jQuery);

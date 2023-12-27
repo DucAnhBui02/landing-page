@@ -1,0 +1,647 @@
+// eslint-disable-next-line no-unused-vars
+
+function Timer(fn, t) {
+  var timerObj = setInterval(fn, t);
+
+  this.stop = function () {
+    if (timerObj) {
+      clearInterval(timerObj);
+      timerObj = null;
+    }
+    return this;
+  };
+
+  // start timer using current settings (if it's not already running)
+  this.start = function () {
+    if (!timerObj) {
+      this.stop();
+      timerObj = setInterval(fn, t);
+    }
+    return this;
+  };
+
+  // start with new or original interval, stop current interval
+  this.reset = function (newT = t) {
+    t = newT;
+    return this.stop().start();
+  };
+}
+
+function vnpt_ai_render_chatbox(configs, baseUrl, baseWs) {
+  var vnpt_ai_box_chat_already_load = false;
+  var src_vnpt_ai_ifr = '';
+  var src_vnpt_ai_ifr_sp = '';
+  var div_chat_container_id = 'vnpt_ai_div_container';
+  var chat_container_id = 'vnpt_ai_livechat_display_container';
+  var chat_support_container_id = 'vnpt_ai_livechat_display_container_support';
+  var chat_floating_button = 'vnpt_ai_livechat_button';
+  var chat_floating_button_dynamic = 'vnpt_ai_livechat_button_dynamic';
+  let boxChatOpen = false;
+  var socketUrl = baseWs ? baseWs : 'livechat.vnpt.ai:443';
+  if (!configs.senderName) {
+    configs.senderName = '';
+  }
+  if (!configs.botMetadata) {
+    configs.botMetadata = '{}';
+  }
+  var subChannel = '';
+  if (configs.sub_channel) {
+    subChannel = '&subchannel=' + configs.sub_channel;
+  }
+  var botIcon = '';
+  if (
+    configs.styles &&
+    configs.styles.chat &&
+    configs.styles.chat.botIcon !== ''
+  ) {
+    botIcon = '&iconbot=' + encodeURIComponent(configs.styles.chat.botIcon);
+  } else if (configs['icon_bot'] && configs['icon_bot'] !== '') {
+    botIcon = '&iconbot=' + encodeURIComponent(configs['icon_bot']);
+  }
+  var sendIcon = '';
+  if (configs['icon_send'] && configs['icon_send'] !== '') {
+    sendIcon = '&iconSend=' + encodeURIComponent(configs['icon_send']);
+  }
+  var customStyle = '';
+  if (configs.styles) {
+    customStyle =
+      '&styles=' + encodeURIComponent(JSON.stringify(configs.styles.chat));
+  }
+  var voiceType = '';
+
+  if (configs.voiceType) {
+    voiceType =
+      '&voiceType=' + encodeURIComponent(JSON.stringify(configs.voiceType));
+  }
+  var showHistory = '';
+
+  if (configs.showHistory) {
+    showHistory =
+      '&showHistory=' + encodeURIComponent(JSON.stringify(configs.showHistory));
+  }
+  var customTheme = '';
+  if (configs.themes) {
+    customTheme = '&themes=' + encodeURIComponent(configs.themes);
+  }
+  var customColorIcon = '';
+  if (configs.colorIcon) {
+    customColorIcon =
+      '&colorIcon=' + encodeURIComponent(JSON.stringify(configs.colorIcon));
+  }
+  var placeholderInput = '';
+  if (configs.placeholderInput) {
+    placeholderInput = '&placeholderInput=' + encodeURIComponent(configs.placeholderInput);
+  }
+  src_vnpt_ai_ifr =
+    baseUrl +
+    '/bot_ver2/' +
+    encodeURIComponent(configs.appCode) +
+    '?botname=' +
+    encodeURIComponent(configs.appName) +
+    '&botMetadata=' +
+    encodeURIComponent(configs.botMetadata) +
+    '&sendername=' +
+    encodeURIComponent(configs.senderName) +
+    '&isVoting=' +
+    encodeURIComponent(configs.isVoting) +
+    '&isOnMic=' +
+    encodeURIComponent(configs.isOnMic) +
+    '&hiddenAudio=' +
+    encodeURIComponent(configs.hiddenAudio) +
+    '&isSupport=' +
+    encodeURIComponent(configs.isSupport) +
+    '&isSuggestions=' +
+    encodeURIComponent(configs.isSuggestions) +
+    '&isSaveHistory=' +
+    encodeURIComponent(configs.isSaveHistory) +
+    '&typeIcon=' +
+    encodeURIComponent(configs.typeIcon) +
+    '&logoDynamic=' +
+    encodeURIComponent(configs.logoDynamic) +
+    '&greeting=' +
+    encodeURIComponent(configs.greeting) +
+    '&isTyping=' +
+    encodeURIComponent(configs.isTyping) +
+    '&timeTyping=' +
+    encodeURIComponent(configs.timeTyping) +
+    '&autoOpen=' +
+    encodeURIComponent(configs.autoOpen) +
+    '&timeOpenUrl=' +
+    encodeURIComponent(configs.timeOpenUrl) +
+    '&scendpoint=' +
+    encodeURIComponent(socketUrl) +
+    '&time=' +
+    new Date().getTime().toString() +
+    subChannel +
+    botIcon +
+    sendIcon +
+    voiceType +
+    showHistory +
+    customTheme +
+    customStyle +
+    customColorIcon +
+    placeholderInput;
+
+  src_vnpt_ai_ifr_sp =
+    baseUrl +
+    '/bot_support/' +
+    encodeURIComponent(configs.appCode) +
+    '?botname=' +
+    encodeURIComponent(configs.appName) +
+    '&botMetadata=' +
+    encodeURIComponent(configs.botMetadata) +
+    '&sendername=' +
+    encodeURIComponent(configs.senderName) +
+    '&isVoting=' +
+    encodeURIComponent(configs.isVoting) +
+    '&isSupport=' +
+    encodeURIComponent(configs.isSupport) +
+    '&isSuggestions=' +
+    encodeURIComponent(configs.isSuggestions) +
+    '&isSaveHistory=' +
+    encodeURIComponent(configs.isSaveHistory) +
+    '&autoOpen=' +
+    encodeURIComponent(configs.autoOpen);
+
+  let elemBtn = document.createElement('button');
+  elemBtn.setAttribute('type', 'button');
+  let iconAi = document.createElement('img');
+  iconAi.setAttribute('alt', 'logo_button_float');
+
+  if (configs.typeIcon == "dynamic") {
+    elemBtn.id = chat_floating_button_dynamic;
+    elemBtn.setAttribute('class', chat_floating_button_dynamic + '_blink');
+    if (configs.styles.floatButton?.img) {
+      iconAi.style.height = configs.styles.floatButton.img?.height;
+      iconAi.style.width = configs.styles.floatButton.img?.width;
+    }
+    if (configs.logoDynamic == "/static/media/botgif.758c0cd9.gif") {
+      iconAi.src = "https://i.ibb.co/sjrYcjj/botgif.gif";
+    } else {
+      iconAi.src = configs.logoDynamic;
+    }
+  } else {
+    elemBtn.id = chat_floating_button;
+    elemBtn.setAttribute('class', chat_floating_button + '_blink');
+    iconAi.src = configs.icon_bot
+      ? configs.icon_bot
+      : 'https://i.ibb.co/2W68sYR/smartbot.png';
+
+    if (configs.styles && configs.styles.floatButton) {
+      if (configs.styles.floatButton?.icon) {
+        iconAi.src = configs.styles.floatButton.icon;
+      }
+      if (configs.styles.floatButton?.img) {
+        iconAi.style.height = configs.styles.floatButton.img?.height;
+        iconAi.style.width = configs.styles.floatButton.img?.width;
+      }
+      var floatingBtnStyles = '';
+      if (configs.styles.floatButton.bgColor) {
+        floatingBtnStyles =
+          'background:' + configs.styles.floatButton.bgColor + ' !important;';
+      }
+      if (parseInt(configs.styles.floatButton.width)) {
+        floatingBtnStyles +=
+          'width:' +
+          parseInt(configs.styles.floatButton.width) +
+          'px !important;';
+      }
+      if (parseInt(configs.styles.floatButton.height)) {
+        floatingBtnStyles +=
+          'height:' +
+          parseInt(configs.styles.floatButton.height) +
+          'px !important;';
+      }
+      if (configs.styles.floatButton.radius) {
+        floatingBtnStyles +=
+          'border-radius:' + configs.styles.floatButton.radius + '!important;';
+      }
+      elemBtn.setAttribute('style', floatingBtnStyles);
+    }
+  }
+  elemBtn.addEventListener('click', vnpt_ai_livechat_button_click);
+
+  elemBtn.appendChild(iconAi);
+  document.body.appendChild(elemBtn);
+
+
+  // var closeIcon      = baseUrl + '/img/close.png'
+  // var fullScreenIcon = baseUrl + '/img/fullscreen.png'
+  var closeIcon =
+    'https://ic-storage.vnpt.vn/smartbot/chatbot_images/312022/bdc2f4cb-586e-4fe4-a9d8-d3301d28458b.png';
+  var fullScreenIcon =
+    'https://ic-storage.vnpt.vn/smartbot/chatbot_images/312022/db08c9ee-8505-4ca8-a3d0-9c376ac97538.png';
+
+  if (configs.styles && configs.styles.head) {
+    if (configs.styles.head.closeIcon) {
+      closeIcon = configs.styles.head.closeIcon;
+    }
+    if (configs.styles.head.fullscreenIcon) {
+      fullScreenIcon = configs.styles.head.fullscreenIcon;
+    }
+  }
+
+  let elemDiv = document.createElement('div');
+  elemDiv.id = div_chat_container_id;
+  const checkLine = (line) => {
+    if (line == 2) {
+      return `<span id="line1"> ${configs.appName.line1}
+              </span>
+              <span id="line2">  ${configs.appName.line2}</span> `;
+    }
+    return `<span id="line1"> ${configs.appName.line1} </span>`;
+  };
+  var iconHeaderDefault = configs.icon_bot
+    ? configs.icon_bot
+    : 'https://livechat.icenter.ai/Chatbot.svg';
+  if (configs?.icon_expand) {
+    fullScreenIcon = configs?.icon_expand;
+  }
+  if (configs?.icon_close) {
+    closeIcon = configs?.icon_close;
+  }
+  var iconHeader = undefined;
+  if (configs.styles.head?.logo) {
+    iconHeader = `width: ${configs.styles.head.logo?.width}; height: ${configs.styles.head.logo?.height}`;
+  }
+
+  var headerTemplate =
+    "<div id='vnpt_ai_livechat_container_iframe_sp'></div>" +
+    "<div id='" + chat_container_id + "' > " +
+    "<div id='vnpt_ai_livechat_container_header'> <img class='logoSvg' style='" +
+    iconHeader +
+    "' src='" +
+    iconHeaderDefault +
+    "' alt='icon' >" +
+    "<div class='vnpt_ai_livechat_container_header_name'>" +
+    checkLine(configs.styles.head.text.line) +
+    "</div><button type='button' id='vnpt_ai_livechat_close' class='vnpt_ai_livechat_container_header_close_button'>" +
+    "<svg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'>" +
+    "<path " +
+    "d='M17.5264 15.6449L17.1717 15.9989L17.5264 16.3528L23.2551 22.0681L23.2561 22.0692C23.3341 22.1465 23.396 22.2386 23.4383 22.34C23.4805 22.4414 23.5023 22.5502 23.5023 22.66C23.5023 22.7699 23.4805 22.8787 23.4383 22.9801C23.396 23.0815 23.3341 23.1736 23.2561 23.2509L23.2532 23.2538C23.1758 23.3318 23.0838 23.3937 22.9824 23.436C22.881 23.4782 22.7722 23.5 22.6623 23.5C22.5524 23.5 22.4437 23.4782 22.3423 23.436C22.2408 23.3937 22.1488 23.3318 22.0714 23.2538L22.0704 23.2528L16.3551 17.5242L16.0011 17.1694L15.6472 17.5242L9.93188 23.2528L9.93085 23.2538C9.85348 23.3318 9.76143 23.3937 9.66002 23.436C9.5586 23.4782 9.44983 23.5 9.33996 23.5C9.23009 23.5 9.12132 23.4782 9.0199 23.436C8.91849 23.3937 8.82644 23.3318 8.74907 23.2538L8.74617 23.2509C8.66817 23.1736 8.60626 23.0815 8.564 22.9801C8.52175 22.8787 8.5 22.7699 8.5 22.66C8.5 22.5502 8.52175 22.4414 8.564 22.34C8.60626 22.2386 8.66817 22.1465 8.74618 22.0692L8.74721 22.0681L14.4758 16.3528L14.8306 15.9989L14.4758 15.6449L8.74763 9.93002C8.74757 9.92997 8.74752 9.92991 8.74746 9.92986C8.59047 9.77278 8.50227 9.55978 8.50227 9.33769C8.50227 9.11552 8.59053 8.90245 8.74763 8.74535C8.90472 8.58826 9.11779 8.5 9.33996 8.5C9.56205 8.5 9.77505 8.5882 9.93213 8.74519C9.93219 8.74524 9.93224 8.7453 9.93229 8.74535L15.6472 14.4736L16.0011 14.8283L16.3551 14.4736L22.07 8.74535C22.07 8.74534 22.07 8.74533 22.07 8.74533C22.2271 8.58825 22.4402 8.5 22.6623 8.5C22.8845 8.5 23.0976 8.58826 23.2546 8.74535C23.4117 8.90245 23.5 9.11552 23.5 9.33769C23.5 9.55966 23.4119 9.77255 23.2551 9.92961C23.255 9.92962 23.255 9.92964 23.255 9.92965C23.2549 9.92978 23.2548 9.9299 23.2546 9.93002L17.5264 15.6449Z'" +
+    "fill= '" + (configs.colorIcon?.colorClose || '#fff') + "'" +
+    "stroke= '" + (configs.colorIcon?.colorClose || '#fff') + "'" +
+    "/>" +
+    "</svg>" +
+    '</button></div>';
+  headerTemplate += "<div id='vnpt_ai_livechat_container_iframe'></div>";
+  headerTemplate +=
+    '<button type="button" id="vnpt_ai_livechat_toggle_fullscreen" class=\'vnpt_ai_livechat_container_header_fullscreen_button\'>' +
+    // "<svg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'>" +
+    // "<path " +
+    // "d='M10.7794 19.967C10.9479 19.8101 11.1707 19.7246 11.4009 19.7287C11.6311 19.7327 11.8508 19.826 12.0136 19.9888C12.1765 20.1516 12.2697 20.3713 12.2738 20.6015C12.2779 20.8318 12.1924 21.0546 12.0354 21.2231L8.36808 24.8892H10.9619C11.1766 24.8892 11.3841 24.967 11.546 25.1081C11.7078 25.2493 11.8131 25.4443 11.8423 25.657L11.8506 25.7779C11.8506 26.0136 11.7569 26.2396 11.5903 26.4063C11.4236 26.573 11.1976 26.6666 10.9619 26.6666H6.22219C5.98649 26.6666 5.76045 26.573 5.59379 26.4063C5.42713 26.2396 5.3335 26.0136 5.3335 25.7779V21.0382C5.3335 20.8025 5.42713 20.5765 5.59379 20.4098C5.76045 20.2431 5.98649 20.1495 6.22219 20.1495C6.45788 20.1495 6.68393 20.2431 6.85059 20.4098C7.01725 20.5765 7.11088 20.8025 7.11088 21.0382V23.6332L10.7794 19.967ZM21.0396 26.6666C20.8039 26.6666 20.5779 26.573 20.4112 26.4063C20.2446 26.2396 20.1509 26.0136 20.1509 25.7779C20.1509 25.5422 20.2446 25.3162 20.4112 25.1495C20.5779 24.9828 20.8039 24.8892 21.0396 24.8892H23.6299L19.9673 21.2231C19.8168 21.0726 19.7253 20.8731 19.7094 20.6609C19.6935 20.4486 19.7543 20.2378 19.8808 20.0666L19.9673 19.967C20.1339 19.8006 20.3598 19.7071 20.5953 19.7071C20.8308 19.7071 21.0567 19.8006 21.2233 19.967L24.8906 23.6356V21.0382C24.8906 20.8235 24.9684 20.616 25.1096 20.4541C25.2507 20.2923 25.4457 20.187 25.6585 20.1578L25.7793 20.1495C26.015 20.1495 26.2411 20.2431 26.4077 20.4098C26.5744 20.5765 26.668 20.8025 26.668 21.0382V25.7779C26.668 26.0136 26.5744 26.2396 26.4077 26.4063C26.2411 26.573 26.015 26.6666 25.7793 26.6666H21.0396ZM10.9619 5.33325C11.1976 5.33325 11.4236 5.42688 11.5903 5.59354C11.7569 5.76021 11.8506 5.98625 11.8506 6.22194C11.8506 6.45764" +
+    // " 11.7569 6.68368 11.5903 6.85034C11.4236 7.01701 11.1976 7.11063 10.9619 7.11063H8.37045L12.0354 10.778C12.1857 10.9286 12.277 11.1282 12.2927 11.3404C12.3083 11.5526 12.2473 11.7634 12.1207 11.9345L12.0342 12.0352C11.8676 12.2016 11.6417 12.2951 11.4062 12.2951C11.1707 12.2951 10.9448 12.2016 10.7782 12.0352L7.11088 8.3631V10.9616C7.11087 11.1764 7.0331 11.3839 6.89194 11.5457C6.75079 11.7076 6.55581 11.8128 6.34305 11.842L6.22219 11.8503C5.98649 11.8503 5.76045 11.7567 5.59379 11.59C5.42713 11.4234 5.3335 11.1973 5.3335 10.9616V6.22194C5.3335 5.98625 5.42713 5.76021 5.59379 5.59354C5.76045 5.42688 5.98649 5.33325 6.22219 5.33325H10.9619ZM25.7793 5.33325C26.015 5.33325 26.2411 5.42688 26.4077 5.59354C26.5744 5.76021 26.668 5.98625 26.668 6.22194V10.9616C26.668 11.1973 26.5744 11.4234 26.4077 11.59C26.2411 11.7567 26.015 11.8503 25.7793 11.8503C25.5436 11.8503 25.3176 11.7567 25.1509 11.59C24.9843 11.4234 24.8906 11.1973 24.8906 10.9616V8.36547L21.2233 12.034C21.0728 12.1845 20.8733 12.276 20.6611 12.2919C20.4489 12.3077 20.238 12.2469 20.0668 12.1205L19.9673 12.034C19.8009 11.8674 19.7074 11.6415 19.7074 11.406C19.7074 11.1705 19.8009 10.9446 19.9673 10.778L23.6311 7.11063H21.0396C20.8249 7.11063 20.6174 7.03285 20.4556 6.8917C20.2937 6.75055 20.1884 6.55556 20.1592 6.34281L20.1509 6.22194C20.1509 5.98625 20.2446 5.76021 20.4112 5.59354C20.5779 5.42688 20.8039 5.33325 21.0396 5.33325H25.7793Z' " +
+    // "fill='" + (configs.colorIcon?.colorExpand || '#fff') + "'" +
+    // "/>" +
+    // "</svg>" +
+    '</button>' +
+    "</div>";
+
+  if (configs.styles.floatButton && configs.styles.floatButton?.width) {
+    const width = parseInt(configs.styles.floatButton?.width);
+    elemDiv.style.bottom = String(width + 30) + 'px';
+  }
+  elemDiv.innerHTML = headerTemplate;
+
+  document.body.appendChild(elemDiv);
+
+  //greeting
+  if (configs.greeting && configs.greeting.length > 0) {
+    let greetingDiv = document.createElement('div');
+    greetingDiv.id = 'btnBoxCompTitle';
+    greetingDiv.className = "cssChatBox animateOpen";
+    greetingDiv.style.color = configs.styles.head.text.line1.color || '#fff';
+    if (configs.colorIcon.colorType == "solid") {
+      document.documentElement.style.setProperty("--color-border-left", configs.styles.floatButton.bgColor || '#53c088');
+      greetingDiv.style.background = configs.styles.floatButton.bgColor || '#53c088';
+    }
+    if (configs.colorIcon.colorType == "linear") {
+      document.documentElement.style.setProperty("--color-border-left", configs.colorIcon.colorTo || '#53c088');
+      greetingDiv.style.background = `linear-gradient(90deg, ${configs.colorIcon.colorFrom || '#53c088'}, ${configs.colorIcon.colorTo || '#53c088'})`
+    }
+    const newContent = document.createTextNode(configs.greeting);
+    greetingDiv.appendChild(newContent);
+    document.body.appendChild(greetingDiv);
+    greetingDiv.addEventListener('click', vnpt_ai_livechat_button_click);
+  }
+
+  //demo
+  var vnpt_ai_i_live_chat_ifrm_sp = document.getElementById(
+    'vnpt_ai_livechat_container_iframe_sp'
+  );
+  if (vnpt_ai_i_live_chat_ifrm_sp) {
+    vnpt_ai_i_live_chat_ifrm_sp.innerHTML =
+      '<iframe allowusermedia allow="camera; microphone"  id="vnpt_ai_i_live_chat_sp"  name="' +
+      Date.now() +
+      '" style="border: none; background-color: transparent; position: absolute; bottom: 0; right: 0; width: 100%; height: 100%;"></iframe>';
+
+    var vnpt_ai_i_live_chat_sp = document.getElementById('vnpt_ai_i_live_chat_sp');
+    vnpt_ai_i_live_chat_sp.src = src_vnpt_ai_ifr_sp;
+  }
+  //end demo
+  let elemHeaderBox = document.getElementById(
+    'vnpt_ai_livechat_container_header'
+  );
+  let closeBtn = document.getElementById('vnpt_ai_livechat_close');
+  closeBtn.addEventListener('click', vnpt_ai_livechat_button_click);
+  let nameBot1 = document.getElementById('line1');
+  let nameBot2 = document.getElementById('line2');
+  var headStyles = '';
+  if (configs.styles) {
+    if (configs.styles.head) {
+      if (configs.styles.head.bgColor) {
+        if (configs.colorIcon?.colorType == "linear") {
+          headStyles +=
+            'background: ' + `linear-gradient(90deg, ${configs.colorIcon.colorFrom}, ${configs.colorIcon.colorTo});`
+        } else {
+          headStyles +=
+            'background:' + configs.styles.head.bgColor + ' !important;';
+        }
+      }
+      if (configs.styles.head.textColor) {
+        headStyles += 'color:' + configs.styles.head.textColor + ' !important;';
+      }
+      if (configs.styles.head.text.line1) {
+        let style =
+          'color:' +
+          (configs.styles.head.text.line1.color || '#fff') +
+          ' !important;' +
+          'font-size:' +
+          (configs.styles.head.text.line1.fontSize || '16px') +
+          '!important;' +
+          'font-weight:' +
+          (configs.styles.head.text.line1.fontWeight || 'normal') +
+          '!important;';
+        nameBot1.setAttribute('style', style);
+      }
+      if (configs.styles.head.text.line2) {
+        let style =
+          'color:' +
+          (configs.styles.head.text.line2.color || '#fff') +
+          ' !important;' +
+          'font-size:' +
+          (configs.styles.head.text.line2.fontSize || '16px') +
+          '!important;' +
+          'font-weight:' +
+          (configs.styles.head.text.line2.fontWeight || 'normal') +
+          '!important;';
+        nameBot2 && nameBot2.setAttribute('style', style);
+      }
+    }
+    if (
+      configs.styles.floatButton &&
+      parseInt(configs.styles.floatButton.height)
+    ) {
+      headStyles +=
+        'bottom:' +
+        (parseInt(configs.styles.floatButton.height) + 40) +
+        'px !important;';
+    }
+
+    if (configs.styles.border) {
+      headStyles +=
+        'border-bottom:' + configs.styles.border?.bottom + ' !important;';
+    }
+    elemHeaderBox.setAttribute('style', headStyles);
+  }
+
+  let fullscreenBtn = document.getElementById(
+    'vnpt_ai_livechat_toggle_fullscreen'
+  );
+  fullscreenBtn.addEventListener('click', function () {
+    let wrap = document.getElementById(chat_container_id);
+    if (wrap.classList) {
+      wrap.classList.toggle('fullscreen');
+    } else {
+      // For IE9 and lower
+      var classes = wrap.className.split(' ');
+      var i = classes.indexOf('fullscreen');
+      if (i >= 0) {
+        classes.splice(i, 1);
+      } else {
+        classes.push('fullscreen');
+        wrap.className = classes.join(' ');
+      }
+    }
+  });
+
+  var vnpt_ai_i_live_chat_ifrm = document.getElementById(
+    'vnpt_ai_livechat_container_iframe'
+  );
+  if (vnpt_ai_i_live_chat_ifrm) {
+    vnpt_ai_i_live_chat_ifrm.innerHTML =
+      '<iframe allowusermedia allow="camera; microphone"  id="vnpt_ai_i_live_chat"  name="' +
+      Date.now() +
+      '" style="border: none; background-color: transparent; position: absolute; bottom: 0; right: 0; width: 100%; height: 100%;"></iframe>';
+
+    var vnpt_ai_i_live_chat = document.getElementById('vnpt_ai_i_live_chat');
+    vnpt_ai_i_live_chat.src = src_vnpt_ai_ifr;
+  }
+  let time_chat = new Date().getTime() / 1000;
+  let openBoxChat = false;
+  function vnpt_ai_livechat_button_click() {
+    var ctnChatBox = document.getElementById(chat_container_id);
+    if (document.getElementById(chat_container_id).style.display === 'block') {
+      document.getElementById(chat_container_id).style.display = 'none';
+      document.getElementById('vnpt_ai_div_container').style.display = 'none';
+      if (configs.greeting && configs.greeting.length > 0) {
+        document.getElementById("btnBoxCompTitle").style.display = "block";
+      }
+      if (configs.typeIcon == "dynamic") {
+        document.getElementById(chat_floating_button_dynamic).style.display = "block";
+      } else {
+        document.getElementById(chat_floating_button).style.display = "block";
+      }
+      if (configs.isSupport) {
+        document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.bottom = '5px';
+        document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.top = '';
+      }
+
+      // document.getElementById(chat_container_id).style.opacity = "0"
+    } else {
+      boxChatOpen = !boxChatOpen;
+      var vnpt_ai_i_live_chat = document.getElementById('vnpt_ai_i_live_chat');
+      if (boxChatOpen) {
+        vnpt_ai_i_live_chat.contentWindow.postMessage('openBoxchat', '*');
+      }
+      if (!vnpt_ai_box_chat_already_load) {
+        // eslint-disable-next-line no-self-assign
+        // vnpt_ai_i_live_chat.src = vnpt_ai_i_live_chat.src;
+        vnpt_ai_box_chat_already_load = true;
+      }
+      time_chat = new Date().getTime() / 1000;
+      openBoxChat = true;
+      document.getElementById(chat_container_id).style.display = 'block';
+      document.getElementById('vnpt_ai_div_container').style.display = 'block';
+      if (configs.typeIcon == "dynamic") {
+        document.getElementById(chat_floating_button_dynamic).style.display = "none";
+      } else {
+        document.getElementById(chat_floating_button).style.display = "none";
+      }
+      if (configs.greeting && configs.greeting.length > 0) {
+        document.getElementById("btnBoxCompTitle").style.display = "none";
+      }
+      if (configs.isSupport) {
+        document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.bottom = '';
+        document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.top = 0;
+      }
+    }
+    if (!ctnChatBox.hidden) {
+      document
+        .getElementById('vnpt_ai_i_live_chat')
+        .contentWindow.postMessage('livechat_open_box_chat_click', '*');
+    }
+  }
+  if (configs.autoOpen) {
+    setTimeout(() => {
+      if (document.getElementById(chat_container_id).style.display !== 'block') {
+        vnpt_ai_livechat_button_click();
+      }
+    }, configs.timeAutoOpen ?? 2000)
+  }
+  if (configs.isSupport) {
+    if (typeof window.addEventListener != 'undefined') {
+      window.addEventListener(
+        'message',
+        function (e) {
+          if (e.data.type && e.data.type == 'showError' && e.origin == baseUrl) {
+            document.getElementById('vnpt_ai_div_container').style.display = 'block';
+            document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.display = 'block';
+            var iframe = document.getElementById("vnpt_ai_i_live_chat_sp");
+            var elmnt = iframe.contentWindow.document.getElementsByTagName("span")[0];
+            var heightContent = elmnt.offsetHeight + 20;
+            var heightBoxchat = document.getElementById('vnpt_ai_livechat_display_container').offsetHeight;
+            if (document.getElementById(chat_container_id).style.display === 'block') {
+              document.getElementById('vnpt_ai_div_container').style.height = (heightBoxchat + heightContent + 10) + 'px';
+              document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.height = heightContent + 'px';
+            } else {
+              document.getElementById('vnpt_ai_div_container').style.height = (heightBoxchat + heightContent + 10) + 'px';
+              document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.height = heightContent + 'px';
+            }
+            this.setTimeout(() => {
+              if (document.getElementById(chat_container_id).style.display === 'block') {
+                document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.display = 'none';
+              } else {
+                document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.display = 'none';
+                document.getElementById('vnpt_ai_div_container').style.display = 'none';
+              }
+              document.getElementById('vnpt_ai_div_container').style.height = '';
+            }, 8000)
+          }
+        },
+        false
+      );
+    } else if (typeof window.attachEvent != 'undefined') {
+      // this part is for IE8
+      window.attachEvent('onmessage', function (e) {
+        if (e.data.type && e.data.type == 'showError' && e.origin == baseUrl) {
+          document.getElementById('vnpt_ai_div_container').style.display = 'block';
+          document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.display = 'block';
+          var iframe = document.getElementById("vnpt_ai_i_live_chat_sp");
+          var elmnt = iframe.contentWindow.document.getElementsByTagName("span")[0];
+          var heightContent = elmnt.offsetHeight + 20;
+          var heightBoxchat = document.getElementById('vnpt_ai_livechat_display_container').offsetHeight;
+          if (document.getElementById(chat_container_id).style.display === 'block') {
+            document.getElementById('vnpt_ai_div_container').style.height = (heightBoxchat + heightContent + 10) + 'px';
+            document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.height = heightContent + 'px';
+          } else {
+            document.getElementById('vnpt_ai_div_container').style.height = '12%';
+            document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.height = heightContent + 'px';
+          }
+          this.setTimeout(() => {
+            if (document.getElementById(chat_container_id).style.display === 'block') {
+              document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.display = 'none';
+            } else {
+              document.getElementById('vnpt_ai_livechat_container_iframe_sp').style.display = 'none';
+              document.getElementById('vnpt_ai_div_container').style.display = 'none';
+            }
+            document.getElementById('vnpt_ai_div_container').style.height = '';
+          }, 4000)
+        }
+      });
+    }
+  }
+  var b;
+  let reset = false;
+  let timeEndSession = undefined;
+  // let currentTime = new Date().getTime() / 1000;
+  // you might want to write these into if statements to make sure that e.data[0] is varA if you have multiple messages coming across
+  if (typeof window.addEventListener != 'undefined') {
+    window.addEventListener(
+      'message',
+      function (e) {
+        if (e.data.type && e.data.type == 'endTime' && e.origin == baseUrl) {
+          timeEndSession = e.data.time[0];
+          time_chat = new Date().getTime() / 1000;
+          b = e.data[1];
+          reset = false;
+        }
+      },
+      false
+    );
+  } else if (typeof window.attachEvent != 'undefined') {
+    // this part is for IE8
+    window.attachEvent('onmessage', function (e) {
+      if (e.data.type && e.data.type == 'endTime' && e.origin == baseUrl) {
+        timeEndSession = e.data.time[0];
+        time_chat = new Date().getTime() / 1000;
+        b = e.data[1];
+        reset = false;
+      }
+    });
+  }
+
+  let countOpen = 0;
+  if (configs.openBoxchatTime) {
+    new Timer(function () {
+      countOpen += 1;
+      if (
+        countOpen >= parseInt(configs.openBoxchatTime ?? 9) &&
+        openBoxChat === false
+      ) {
+        vnpt_ai_livechat_button_click();
+      }
+    }, 1000);
+  }
+  if (configs.expireSession) {
+    new Timer(function () {
+      let currentTime = new Date().getTime() / 1000;
+      if (
+        currentTime >= time_chat + parseInt(timeEndSession ?? 420) &&
+        reset === false
+      ) {
+        time_chat = currentTime;
+        var iframe = document.getElementById('vnpt_ai_i_live_chat');
+        iframe.contentWindow.postMessage('resetSession', '*');
+        reset = true;
+      }
+    }, 1000);
+  }
+
+  if (configs.offchatTime) {
+    new Timer(function () {
+      let currentTime = new Date().getTime() / 1000;
+      if (currentTime >= time_chat + parseInt(configs.offchatTime ?? 60)) {
+        document.getElementById(chat_container_id).style.display = 'none';
+        time_chat = currentTime;
+      }
+    }, 1000);
+  }
+  if (configs.isSupport) {
+    if (typeof window.addEventListener != 'undefined') {
+      window.addEventListener('message', function (e) {
+        var iframe = document.getElementById('vnpt_ai_i_live_chat_sp');
+        iframe.contentWindow.postMessage(e.data, '*');
+      })
+    }
+    else if (typeof window.attachEvent != 'undefined') {
+      // this part is for IE8
+      window.attachEvent('onmessage', function (e) {
+        var iframe = document.getElementById('vnpt_ai_i_live_chat_sp');
+        iframe.contentWindow.postMessage(e.data, '*');
+      });
+    }
+  }
+}
+
+// vnpt_ai_render_chatbox.init()
